@@ -1,0 +1,5 @@
+#  cassandra:
+    keyspaceNameData: my_keyspace
+    contactPointsData: 
+      - 192.168.99.100
+    portData: 9042
