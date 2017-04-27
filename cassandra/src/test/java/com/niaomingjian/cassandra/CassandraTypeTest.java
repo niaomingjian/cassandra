@@ -9,9 +9,9 @@ import com.datastax.driver.core.Statement;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.nio.ByteBuffer;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.GregorianCalendar;
 
 /**
  * <pre>
@@ -27,22 +27,23 @@ public class CassandraTypeTest {
 
     statement = new SimpleStatement("" 
                                   + "CREATE TABLE typetest (\n" 
-                                  + "col1 ascii,\n" 
-                                  + "col2 bigint,\n"
-                                  + "col4 boolean,\n" 
-                                  + "col6 date,\n" 
-                                  + "col7 decimal,\n" 
-                                  + "col8 double,\n" 
-                                  + "col9 float,\n" 
-                                  + "col10 inet,\n"
-                                  + "col11 int,\n" 
-                                  + "col15 smallint,\n" 
-                                  + "col16 text,\n" 
-                                  + "col17 time,\n" 
-                                  + "col18 timestamp,\n"
-                                  + "col20 tinyint,\n" 
-                                  + "col24 varchar,\n" 
-                                  + "PRIMARY KEY (col24, col11)\n" + ")");
+                                  + "col1_ascii ascii,\n" 
+                                  + "col2_bigint bigint,\n"
+                                  + "col3_blob blob,\n"
+                                  + "col4_boolean boolean,\n" 
+                                  + "col6_date date,\n" 
+                                  + "col7_decimal decimal,\n" 
+                                  + "col8_double double,\n" 
+                                  + "col9_float float,\n" 
+                                  + "col10_inet inet,\n"
+                                  + "col11_int int,\n" 
+                                  + "col15_smallint smallint,\n" 
+                                  + "col16_text text,\n" 
+                                  + "col17_time time,\n" 
+                                  + "col18_timestamp timestamp,\n"
+                                  + "col20_tinyint tinyint,\n" 
+                                  + "col24_varchar varchar,\n" 
+                                  + "PRIMARY KEY (col24_varchar, col11_int)\n" + ")");
     CassandraConnector.getSession().execute(statement);
 
     insert("'aaa'", "'1000'", String.valueOf(1));
@@ -50,13 +51,13 @@ public class CassandraTypeTest {
     CassandraConnector.close();
   }
 
-  private void insert(String col1, String col24, String col11) {
+  private void insert(String col1_ascii, String col24_varchar, String col11_int) {
     String insertBase = "insert into "
-        + "typetest(col1,col2,col4,col6,col7,col8,col9,col10,col15,col16,col17,col18,col20,col24,col11)"
-        + "values(@col1, 10000, false,'2016-01-01', 20.1, 200.1, 2000.1, '10.0.0.1', 1, 'test_new','01:01:01.013013013','2016-01-01T01:01:01.013+0700', 1, @col24, @col11)";
+        + "typetest(col1_ascii,col2_bigint,col3_blob,col4_boolean,col6_date,col7_decimal,col8_double,col9_float,col10_inet,col15_smallint,col16_text,col17_time,col18_timestamp,col20_tinyint,col24_varchar,col11_int)"
+        + "values(@col1_ascii, 10000, 0x414141, false,'2016-01-01', 20.1, 200.1, 2000.1, '10.0.0.1', 1, 'test_new','01:01:01.013013013','2016-01-01T01:01:01.013+0700', 1, @col24_varchar, @col11_int)";
 
     SimpleStatement statement = new SimpleStatement(
-        insertBase.replaceFirst("@col1", col1).replaceFirst("@col24", col24).replaceFirst("@col11", col11));
+        insertBase.replaceFirst("@col1_ascii", col1_ascii).replaceFirst("@col24_varchar", col24_varchar).replaceFirst("@col11_int", col11_int));
     CassandraConnector.getSession().execute(statement);
   }
 
@@ -70,8 +71,8 @@ public class CassandraTypeTest {
     ResultSet rs = session.execute(statement);
     Row row = rs.one();
 
-    // Date   DB=>com.datastax.driver.core.LocalDate
-    LocalDate date = row.getDate("col6");
+    // Date DB=>com.datastax.driver.core.LocalDate
+    LocalDate date = row.getDate("col6_date");
     System.out.println("The Returned Value:" + date.toString());
 
     System.out.println("The Returned Value:" + date.getDaysSinceEpoch());
@@ -82,13 +83,17 @@ public class CassandraTypeTest {
     System.out.println("The Returned Value:" + date.getMillisSinceEpoch());
     System.out.println("The Calculated Value:" + date.getDaysSinceEpoch() * 24 * 3600 * 1000L);
 
-    // Time  DB=>long
-    long time = row.getTime("col17");
+    // Time DB=>long
+    long time = row.getTime("col17_time");
     System.out.println(time);
 
     // Timestamp DB=>java.util.Date
-    Date timestamp = row.getTimestamp("col18");
+    Date timestamp = row.getTimestamp("col18_timestamp");
     System.out.println(timestamp.toString());
+
+    // Blob DB=>ByteBuffer
+    ByteBuffer blob = row.getBytes("col3_blob");
+    System.out.println(new String(blob.array()));
 
     CassandraConnector.close();
   }
